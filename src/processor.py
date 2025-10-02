@@ -2,5 +2,5 @@ import numpy as np
 
 
 # Placeholder processor
-def processor(msg):
+def midi_processor(msg):
     return msg
