@@ -91,7 +91,7 @@ class WindowRT(QMainWindow):
         self.timer.timeout.connect(self.update)
         self.timer.start(30)        # 30 ms
 
-        self.data_points = []
+        self.notes = []
 
     def update(self):
         # Fetch from queue
@@ -101,19 +101,19 @@ class WindowRT(QMainWindow):
                 points = self.processor(msg)
                 if points is not None:
                     if points['type'] == 1:
-                        self.data_points.append(points['coords'])
+                        self.notes.append(points['coords'])
                     elif points['type'] == 0:
-                        for i, p in enumerate(self.data_points):
+                        for i, p in enumerate(self.notes):
                             if np.allclose(p, points['coords']):
-                                self.data_points.pop(i)
+                                self.notes.pop(i)
                                 break
 
         except queue.Empty:
             pass
             
-        if self.data_points:
+        if self.notes:
             self.scatter.set_data(
-                pos=np.array(self.data_points),
+                pos=np.array(self.notes),
                 face_color='red',
                 size=10
             )

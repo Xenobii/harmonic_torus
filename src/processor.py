@@ -24,6 +24,9 @@ class Torus_Note():
     @classmethod
     def msg2torus(cls, msg):
         return cls(msg)
+    
+    
+
 
 class Note_Cloud():
     def __init__(self, notes):
