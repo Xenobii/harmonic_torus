@@ -1,8 +1,10 @@
 import mido
 import queue
 import threading
-from vispy import scene
+from vispy import scene, color, visuals
+import numpy as np
 
+from vispy.geometry import MeshData
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import QWidget, QPushButton, QVBoxLayout, QLabel, QMainWindow
 
@@ -76,7 +78,12 @@ class WindowRT(QMainWindow):
         self.view = self.canvas.central_widget.add_view()
         self.view.camera = 'turntable'
 
-        # Placeholder scatter
+        torus_mesh = create_torus(R=1.0, r=0.3)
+        self.torus = scene.visuals.Mesh(meshdata=torus_mesh,
+                                        color=(0.5, 0.8, 0.2, 0.1),
+                                        parent=self.view.scene)
+
+        # Scatter
         self.scatter = scene.visuals.Markers(parent=self.view.scene)
 
         # Polling
@@ -92,15 +99,51 @@ class WindowRT(QMainWindow):
             while True:
                 msg = self.midi_queue.get_nowait()
                 points = self.processor(msg)
-                if points:
-                    self.data_points.append(points)
+                if points is not None:
+                    if points['type'] == 1:
+                        self.data_points.append(points['coords'])
+                    elif points['type'] == 0:
+                        for i, p in enumerate(self.data_points):
+                            if np.allclose(p, points['coords']):
+                                self.data_points.pop(i)
+                                break
 
         except queue.Empty:
             pass
             
         if self.data_points:
             self.scatter.set_data(
-                pos=self.data_points,
+                pos=np.array(self.data_points),
                 face_color='red',
                 size=10
             )
+        self.scatter.update()
+
+
+def create_torus(R=1.0, r=0.3, rows=30, cols=60):
+    u = np.linspace(0, 2*np.pi, rows, endpoint=False)
+    v = np.linspace(0, 2*np.pi, cols, endpoint=False)
+    u, v = np.meshgrid(u, v, indexing='ij')
+
+    x = (R + r * np.cos(v)) * np.cos(u)
+    y = (R + r * np.cos(v)) * np.sin(u)
+    z = r * np.sin(v)
+
+    # Flatten
+    vertices = np.column_stack([x.ravel(), y.ravel(), z.ravel()])
+
+    # Create faces (quads -> triangles)
+    faces = []
+    for i in range(rows):
+        for j in range(cols):
+            i_next = (i + 1) % rows
+            j_next = (j + 1) % cols
+            a = i * cols + j
+            b = i_next * cols + j
+            c = i_next * cols + j_next
+            d = i * cols + j_next
+            faces.append([a, b, c])
+            faces.append([a, c, d])
+    faces = np.array(faces)
+
+    return MeshData(vertices=vertices, faces=faces)
