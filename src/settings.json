@@ -1,0 +1,23 @@
+{
+    "torus": {
+        "outer_radius"  : 1,
+        "inner_radius"  : 0.3,
+        "n_u": 24,
+        "n_v": 12
+    },
+    "window": {
+        "width" : 400,
+        "height": 300
+    },
+    "canvas": {
+        "background_color"  : "#606060",
+        "note_color"    : "black",
+        "note_size"     : 20,
+        "cntr_color"    : "blue",
+        "cntr_size"     : 40
+    },
+    "midi": {
+        "port": 0,
+        "use_pedal": true
+    }
+}
